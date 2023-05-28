@@ -1,0 +1,39 @@
+import numpy as np
+from keras.preprocessing.sequence import pad_sequences
+
+# Load DNA sequences and annotations from files
+seq_file = "sequences.txt"
+anno_file = "annotations.txt"
+sequences = []
+annotations = []
+with open(seq_file) as f1, open(anno_file) as f2:
+for line1, line2 in zip(f1, f2):
+sequences.append(line1.strip())
+annotations.append(line2.strip())
+
+# Convert nucleotides to one-hot encoding
+nucleotides = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+def one_hot_encode(seq):
+return np.eye(4)[[nucleotides[x] for x in seq]]
+one_hot_sequences = [one_hot_encode(seq) for seq in sequences]
+
+# Pad sequences to a fixed length
+max_length = 1000
+
+padded_sequences = pad_sequences(one_hot_sequences, maxlen=max_length, padding='post')
+
+# Convert annotations to binary labels
+labels = []
+for anno in annotations:
+if "coding" in anno:
+start, end = [int(x) for x in anno.split()[1:]]
+label = np.zeros(max_length)
+label[start:end+1] = 1
+labels.append(label)
+else:
+labels.append(np.zeros(max_length))
+
+# Split data into training and testing sets
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(padded_sequences, labels, test_size=0.2,
+random_state=42)
